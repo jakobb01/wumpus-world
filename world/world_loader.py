@@ -1,3 +1,4 @@
+# reads the .txt file and creates tags and coordinates of those tags on the map
 def load_world(filename):
     world = {}
     with open(filename, 'r') as file:

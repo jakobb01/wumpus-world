@@ -11,6 +11,9 @@ class Visualizer:
         self.canvas = tk.Canvas(self.root, width=440, height=450)
         self.canvas.pack()
 
+    # todo: M44 means map is 4 cells wide and 4 cells high
+
+
     def load_images(self):
         # load all images and store them in a dictionary and resize to fit into cells
         self.images = {}
@@ -49,7 +52,7 @@ class Visualizer:
                     fill="white"
                 )
 
-        # write row numbers (4 to 1) on the left
+        # write row numbers on the left
         for y in range(grid_size):
             self.canvas.create_text(
                 10, margin_top+y * cell_size + cell_size // 2,
@@ -58,7 +61,7 @@ class Visualizer:
                 anchor="w"
             )
 
-        # write column numbers (1 to 4) below the grid
+        # write column numbers below the grid
         for x in range(grid_size):
             self.canvas.create_text(
                 margin_left+x * cell_size + cell_size // 2, margin_top+grid_size * cell_size + 20,
@@ -80,19 +83,19 @@ class Visualizer:
                 cell = (x, y)
                 if cell not in cell_contents:
                     cell_contents[cell] = []
-                # Add only valid keys (those present in self.images)
+                # add only valid keys (those present in self.images)
                 for char in tag:
                     if char in self.images:
                         cell_contents[cell].append(char)
 
         # for each cell, draw up to 4 images in quadrants
         for (x, y), keys in cell_contents.items():
-            # Calculate top-left corner of the cell
+            # calc top left corner of the cell
             cell_left = margin_left + (x - 1) * cell_size
             cell_top = margin_top + (4 - y) * cell_size
 
+            # for more images in one cell we split into quadrants
             if len(keys) > 1:
-                # for more images we split into quadrants
                 offsets = [
                     (cell_size // 4, cell_size // 4),           # top left
                     (3 * cell_size // 4, cell_size // 4),       # top right
@@ -100,13 +103,15 @@ class Visualizer:
                     (3 * cell_size // 4, 3 * cell_size // 4),   # bottom right
                 ]
                 for i, key in enumerate(keys[:4]):
+                    # get position of each image with offsets
                     dx, dy = offsets[i]
                     canvas_x = cell_left + dx
                     canvas_y = cell_top + dy
                     self.canvas.create_image(canvas_x, canvas_y, image=self.images[key])
+            # center single image
             else:
-                # center single image
                 key = keys[0]
+                # position of the picture
                 canvas_x = cell_left + cell_size // 2
                 canvas_y = cell_top + cell_size // 2
                 self.canvas.create_image(canvas_x, canvas_y, image=self.images[key])
