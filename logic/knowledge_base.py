@@ -1,72 +1,62 @@
 from collections import defaultdict
 
 class KnowledgeBase:
-    def __init__(self):
+    def __init__(self, size):
         self.visited = set()
         self.safe = set()
         self.possible_pits = defaultdict(int)
         self.possible_wumpus = defaultdict(int)
         self.confirmed_pits = set()
         self.confirmed_wumpus = None
+        self.size = size  # (max_x, max_y)
+
+    def in_bounds(self, pos):
+        x, y = pos
+        max_x, max_y = self.size
+        return 1 <= x <= max_x and 1 <= y <= max_y
 
     def tell(self, position, percept):
-        #position (x, y)
-        #percept dict with keys like 'breeze', 'stench', 'glitter'
-        
         x, y = position
         self.visited.add(position)
         self.safe.add(position)  # safe if we are on it
 
         # determine adjacent tiles
-        adj = self.get_adjacent(x, y)
+        adj = [a for a in self.get_adjacent(x, y) if self.in_bounds(a)]
 
-        # todo: handle more then one percept (tile (2,3) in test world)
-        # handle breeze (possible pit nearby)
         if percept.get('breeze', False):
             for a in adj:
                 if a not in self.visited and a not in self.safe:
                     self.possible_pits[a] += 1
-        # stench - possible Wumpus nearby
         elif percept.get('stench', False):
             for a in adj:
                 if a not in self.visited and a not in self.safe:
                     self.possible_wumpus[a] += 1
         else:
             for a in adj:
-                # only mark as safe if not already possible wumpus or pit
                 if a not in self.possible_wumpus and a not in self.possible_pits:
                     self.safe.add(a)
 
-        # glitter doesnt affect safety
-
-    # todo: research->ask just one function, that returns array of all things?
     def ask_safe(self, position):
-        if position in self.safe and \
-           position not in self.confirmed_pits and \
-           position != self.confirmed_wumpus:
-            return True
-        return False
+        return (
+            self.in_bounds(position) and
+            position in self.safe and
+            position not in self.confirmed_pits and
+            position != self.confirmed_wumpus
+        )
 
     def ask_possible_pit(self, position):
-        return self.possible_pits.get(position, 0) > 0
+        return self.in_bounds(position) and self.possible_pits.get(position, 0) > 0
 
     def ask_possible_wumpus(self, position):
-        return self.possible_wumpus.get(position, 0) > 0
+        return self.in_bounds(position) and self.possible_wumpus.get(position, 0) > 0
 
     def ask_all(self):
-        """
-        Returns a dictionary with all current knowledge:
-        - 'safe': set of safe fields
-        - 'possible_pits': set of possible pit fields
-        - 'possible_wumpus': set of possible wumpus fields
-        """
         return {
-            'safe': set(self.safe),
-            'possible_pits': set(self.possible_pits.keys()),
-            'possible_wumpus': set(self.possible_wumpus.keys())
+            'safe': {pos for pos in self.safe if self.in_bounds(pos)},
+            'possible_pits': {pos for pos in self.possible_pits.keys() if self.in_bounds(pos)},
+            'possible_wumpus': {pos for pos in self.possible_wumpus.keys() if self.in_bounds(pos)}
         }
 
-    # todo: shouldnt return nodes outside the perimiter
     def get_adjacent(self, x, y):
         return [
             (x+1, y), (x-1, y),

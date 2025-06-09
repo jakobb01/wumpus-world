@@ -8,7 +8,9 @@ class WumpusAgent:
         self.exit_cave_pos = world['GO'][0] if 'GO' in world and world['GO'] else (1, 1)
         self.facing = 'right' # predefined starting face for agent
         self.visited = set()
-        self.kb = KnowledgeBase()
+        self.size = tuple(world['size'][0]) if isinstance(world['size'], list) else world['size']
+        self.kb = KnowledgeBase(self.size)
+        self.found_gold = set() # store were we found gold, so we can count only once at the end.
         #print(f"Starting at {self.position}, facing {self.facing}")
 
     # rules
@@ -47,11 +49,45 @@ class WumpusAgent:
         print(f"Percepts sensed: {percept}")
         # go for tell knowledge base
         self.kb.tell(self.position, percept)
+        self.visited.add(self.position)
+
+        # check if agent found gold
+        if percept.get('glitter'):
+            self.found_gold.add(self.position)
+
         # output for TESTING only
         info = self.kb.ask_all()
         print("Safe fields:", info['safe'])
         print("Possible pits:", info['possible_pits'])
         print("Possible wumpus:", info['possible_wumpus'])
-        # with knows 
-        #path = a_star_search(self.position, goal, self.kb, self.world)
-        #print("Planned path:", path)
+        matrix = self.build_weighted_matrix(info)
+
+        # planning should first explore all unvisited, safe tiles (updating on the go) and later head for the exit
+        safe_unvisited = [pos for pos in info['safe'] if pos not in self.visited and pos != self.exit_cave_pos]
+        if safe_unvisited:
+            targets = safe_unvisited
+        else:
+            targets = [self.exit_cave_pos]
+        # pass targets to the planning algorithm
+        next_move = a_star_search(self.position, targets, matrix)
+        # print next move
+        print("Next move:", next_move)
+
+    def build_weighted_matrix(self, info):
+        max_x, max_y = self.size
+        matrix = [[1 for _ in range(max_y)] for _ in range(max_x)]  # default: unknown
+
+        for x in range(1, max_x+1):
+            for y in range(1, max_y+1):
+                pos = (x, y)
+                if pos in info['safe']:
+                    if pos == self.exit_cave_pos:
+                        matrix[x-1][y-1] = 2  # exit is not preferred over exploring
+                    elif pos in self.visited:
+                        matrix[x-1][y-1] = 0  # already visited safe
+                    else:
+                        matrix[x-1][y-1] = 1  # unvisited safe
+                if pos in info['possible_pits'] or pos in info['possible_wumpus']:
+                    matrix[x-1][y-1] = 1000
+        print(matrix)
+        return matrix
