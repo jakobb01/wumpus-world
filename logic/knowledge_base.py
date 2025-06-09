@@ -20,6 +20,7 @@ class KnowledgeBase:
         # determine adjacent tiles
         adj = self.get_adjacent(x, y)
 
+        # todo: handle more then one percept (tile (2,3) in test world)
         # handle breeze (possible pit nearby)
         if percept.get('breeze', False):
             for a in adj:
@@ -38,6 +39,7 @@ class KnowledgeBase:
 
         # glitter doesnt affect safety
 
+    # todo: research->ask just one function, that returns array of all things?
     def ask_safe(self, position):
         if position in self.safe and \
            position not in self.confirmed_pits and \
@@ -50,6 +52,19 @@ class KnowledgeBase:
 
     def ask_possible_wumpus(self, position):
         return self.possible_wumpus.get(position, 0) > 0
+
+    def ask_all(self):
+        """
+        Returns a dictionary with all current knowledge:
+        - 'safe': set of safe fields
+        - 'possible_pits': set of possible pit fields
+        - 'possible_wumpus': set of possible wumpus fields
+        """
+        return {
+            'safe': set(self.safe),
+            'possible_pits': set(self.possible_pits.keys()),
+            'possible_wumpus': set(self.possible_wumpus.keys())
+        }
 
     # todo: shouldnt return nodes outside the perimiter
     def get_adjacent(self, x, y):

@@ -20,8 +20,8 @@ def main():
     world = load_world("tests/wumpus_world_sample.txt")
     agent = WumpusAgent(world)
     agent.run()
-    visualizer = Visualizer(world, agent)
-    visualizer.run()
+    #visualizer = Visualizer(world, agent)
+    #visualizer.run()
 
 if __name__ == "__main__":
     main()

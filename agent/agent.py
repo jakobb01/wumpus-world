@@ -4,11 +4,12 @@ from search.planner import a_star_search
 class WumpusAgent:
     def __init__(self, world):
         self.world = world
-        self.position = (1, 2)
-        self.facing = 'right'
+        self.position = world['A'][0] if 'A' in world and world['A'] else (1, 1)
+        self.exit_cave_pos = world['GO'][0] if 'GO' in world and world['GO'] else (1, 1)
+        self.facing = 'right' # predefined starting face for agent
         self.visited = set()
         self.kb = KnowledgeBase()
-        print(f"Starting at {self.position}, facing {self.facing}")
+        #print(f"Starting at {self.position}, facing {self.facing}")
 
     # rules
     # price of shooting the (only) arrow is -100 points
@@ -38,15 +39,19 @@ class WumpusAgent:
 
     def run(self):
         # simulation for one move
+
         print(f"Move to field {self.position}")
         # get all percepts
         percept = self.get_percept(self.position)
+        # output for TESTING only
         print(f"Percepts sensed: {percept}")
         # go for tell knowledge base
         self.kb.tell(self.position, percept)
-        print(f"Safe fields known: {self.kb.safe}")
-        print(f"Possible pits: {dict(self.kb.possible_pits)}")
-        print(f"Possible wumpus: {dict(self.kb.possible_wumpus)}")
+        # output for TESTING only
+        info = self.kb.ask_all()
+        print("Safe fields:", info['safe'])
+        print("Possible pits:", info['possible_pits'])
+        print("Possible wumpus:", info['possible_wumpus'])
         # with knows 
         #path = a_star_search(self.position, goal, self.kb, self.world)
         #print("Planned path:", path)
